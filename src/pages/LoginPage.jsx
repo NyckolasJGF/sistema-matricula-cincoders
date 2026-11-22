@@ -45,7 +45,7 @@ export default function LoginPage({ onLogin, error, setError }) {
         }}
           >
             <input name="username" placeholder="Usuário" autoFocus />
-            <button>Entrar →</button>
+            <button>Entrar</button>
           </form>
           <small>Teste com <code>ana</code>, <code>bruno</code> ou <code>secretaria</code>.</small>
           {error && <p className="login-error">{error}</p>}

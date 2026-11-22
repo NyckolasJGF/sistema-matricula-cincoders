@@ -1,6 +1,6 @@
-# Sistema de Matrícula - Cincoders
+# Matrículas CIn
 
-Aplicação full-stack para matrícula de graduação. A prioridade implementada é a jornada do aluno: login, consulta de ofertas, matrícula, cancelamento e progresso. A secretaria mantém disciplinas, professores e turmas do semestre.
+Sistema de matrícula de graduação desenvolvido para o processo seletivo da Cincoders. A prioridade implementada é a jornada do aluno: login, consulta de ofertas, matrícula, cancelamento e progresso. A secretaria mantém disciplinas, professores e turmas do semestre.
 
 ## Rodando localmente
 
@@ -28,6 +28,7 @@ npm run build
 
 - `src/pages`: telas por perfil e fluxo;
 - `src/components`: elementos reutilizáveis de interface, como tabela, marca e resumo de disciplina;
+- `src/assets`: recursos visuais locais, incluindo a marca e a fotografia do CIn usada no login;
 - `src/services`: comunicação com a API;
 - `server`: inicialização, banco, regras de negócio e testes;
 - `server/app.test.js`: testes automatizados das regras de dados.
@@ -72,6 +73,7 @@ A regra é validada exclusivamente no back-end, dentro da mesma transação que 
 - **Remoção conservadora**: professor com turma vinculada e turma com matrícula registrada não podem ser excluídos, preservando a consistência e o histórico.
 - **Resumo de disciplina**: a secretaria mantém uma descrição curta; o aluno a consulta por hover, foco de teclado ou toque no ícone de informação.
 - **Motion**: transições de aba, feedbacks de matrícula e popovers usam animações curtas e respeitam `prefers-reduced-motion`.
+- **Identidade do login**: no desktop, a tela combina uma fotografia sombreada do CIn, a marca institucional e um cartão de acesso com contraste; no celular, a fotografia é omitida para preservar legibilidade e desempenho.
 
 ## Regras cobertas
 
