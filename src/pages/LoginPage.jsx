@@ -1,8 +1,10 @@
+import Brand from '../components/Brand';
+
 export default function LoginPage({ onLogin, error, setError }) {
   return (
     <main className="login-page">
       <section className="login-story">
-        <div className="login-brand"><span>◈</span> CInCoders</div>
+        <Brand light detail="Sistema de graduação" />
         <div className="story-copy">
           <p>2026.2 · Graduação</p>
           <h1>Tecnologia a serviço da sua jornada.</h1>
@@ -11,7 +13,7 @@ export default function LoginPage({ onLogin, error, setError }) {
       </section>
       <section className="login-form-area">
         <div className="login-card">
-          <div className="login-brand mobile-brand"><span>◈</span> CInCoders</div>
+          <Brand detail="Sistema de graduação" />
           <h1>Boas-vindas.</h1>
           <p>Acesse sua área de matrícula.</p>
           <form

@@ -16,6 +16,7 @@ test('dados iniciais têm CH válida e classificação diferente entre cursos', 
   const db = createDb(); seed(db);
   assert.equal(db.prepare('SELECT count(*) n FROM subjects WHERE hours % 15 != 0 OR hours < 15 OR hours > 120').get().n, 0);
   assert.equal(db.prepare("SELECT count(*) n FROM curriculum a JOIN curriculum b ON a.subject_id=b.subject_id WHERE a.course_id=1 AND b.course_id=2 AND a.kind != b.kind").get().n > 0, true);
+  assert.match(db.prepare("SELECT description FROM subjects WHERE code='IF1002'").get().description, /SQL/);
 });
 
 test('banco protege código de disciplina, e-mail de professor e capacidade inválida', () => {

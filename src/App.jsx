@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import LoginPage from './pages/LoginPage';
 import StudentPage from './pages/StudentPage';
 import OfficePage from './pages/OfficePage';
+import Brand from './components/Brand';
 import { request } from './services/api';
 
 export default function App() {
@@ -20,7 +21,7 @@ export default function App() {
   return (
     <main className="app-shell">
       <header className="app-header reveal-header">
-        <div className="brand"><span>◈</span> CInCoders <small>/ Matrículas</small></div>
+        <Brand light detail="Sistema de graduação" />
         <div className="account"><span className="avatar">{user.username.slice(0, 2).toUpperCase()}</span><button onClick={logout}>Sair</button></div>
       </header>
       {error && <p className="error">{error}<button className="retry" onClick={() => window.location.reload()}>Tentar novamente</button><button onClick={() => setError('')}>×</button></p>}

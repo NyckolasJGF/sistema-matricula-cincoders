@@ -1,6 +1,6 @@
 # Sistema de Matrícula - Cincoders
 
-Aplicação full-stack para matrícula de graduação. A prioridade implementada é a jornada do aluno: login, consulta de ofertas, matrícula, cancelamento e progresso. Há também consultas para a secretaria.
+Aplicação full-stack para matrícula de graduação. A prioridade implementada é a jornada do aluno: login, consulta de ofertas, matrícula, cancelamento e progresso. A secretaria mantém disciplinas, professores e turmas do semestre.
 
 ## Rodando localmente
 
@@ -27,7 +27,7 @@ npm run build
 ## Organização de código
 
 - `src/pages`: telas por perfil e fluxo;
-- `src/components`: elementos reutilizáveis de interface;
+- `src/components`: elementos reutilizáveis de interface, como tabela, marca e resumo de disciplina;
 - `src/services`: comunicação com a API;
 - `server`: inicialização, banco, regras de negócio e testes;
 - `server/app.test.js`: testes automatizados das regras de dados.
@@ -43,9 +43,9 @@ Todas as rotas começam com `/api`. O login cria uma sessão em cookie HTTP-only
 | Aluno | `GET /offers?q=&page=` | Ofertas, busca e paginação. |
 | Aluno | `POST /enrollments`, `GET /enrollments/me`, `DELETE /enrollments/:id` | Matricular, listar e cancelar. |
 | Aluno | `GET /progress` | Progresso por grupo de carga horária. |
-| Secretaria | `GET/POST /office/subjects`, `PUT /office/subjects/:id` | Listar, criar e editar disciplinas. |
-| Secretaria | `GET/POST /office/professors` | Listar e cadastrar professores. |
-| Secretaria | `GET/POST /office/sections`, `PUT /office/sections/:id/capacity` | Listar/abrir turmas e alterar vagas. |
+| Secretaria | `GET/POST /office/subjects`, `PUT /office/subjects/:id` | Listar, criar e editar disciplinas, incluindo resumo opcional de até 280 caracteres. |
+| Secretaria | `GET/POST /office/professors`, `DELETE /office/professors/:id` | Listar, cadastrar e excluir professor sem turmas vinculadas. |
+| Secretaria | `GET/POST /office/sections`, `PUT /office/sections/:id/capacity`, `DELETE /office/sections/:id` | Listar, abrir, alterar vagas e excluir turmas sem matrículas registradas. |
 
 Erros usam JSON no formato `{ "error": "mensagem clara" }`, com `401` para sessão ausente/expirada, `403` para perfil sem permissão, `409` para conflito de regra de negócio e `422` para dados inválidos.
 
@@ -68,6 +68,10 @@ A regra é validada exclusivamente no back-end, dentro da mesma transação que 
 - **Sessão por cookie**: o login cria uma sessão de 30 minutos em cookie `httpOnly`; em produção, o armazenamento da sessão deve ser persistente e a autenticação deve incluir senha com hash.
 - **Transação de matrícula**: `BEGIN IMMEDIATE` evita que duas requisições ocupem simultaneamente a última vaga de uma turma.
 - **Progresso orientado ao curso**: a classificação é calculada a partir da estrutura curricular do aluno, e não da disciplina isolada.
+- **Turmas por professor**: cada combinação de disciplina e professor é uma turma independente, com identificação e vagas próprias. O sistema impede repetir a mesma combinação.
+- **Remoção conservadora**: professor com turma vinculada e turma com matrícula registrada não podem ser excluídos, preservando a consistência e o histórico.
+- **Resumo de disciplina**: a secretaria mantém uma descrição curta; o aluno a consulta por hover, foco de teclado ou toque no ícone de informação.
+- **Motion**: transições de aba, feedbacks de matrícula e popovers usam animações curtas e respeitam `prefers-reduced-motion`.
 
 ## Regras cobertas
 
@@ -75,6 +79,8 @@ A regra é validada exclusivamente no back-end, dentro da mesma transação que 
 - vagas positivas, impedimento de lotação e devolução da vaga no cancelamento;
 - estudante só altera as próprias matrículas; aprovação impede nova matrícula;
 - classificação por curso, excesso de perfil transferido para livre e progresso limitado a 100%.
+- uma disciplina pode ter turmas separadas para professores diferentes, com vagas independentes;
+- resumo de disciplina limitado a 280 caracteres e remoções administrativas protegidas por vínculos.
 
 ## Testes
 
@@ -89,6 +95,7 @@ Os testes automatizados cobrem restrições de dados, sessão, lotação, aprova
 - usar armazenamento persistente para sessões e senha com hash;
 - adicionar testes HTTP de integração às regras já cobertas pelas unidades;
 - substituir o `prompt` de alteração de vagas por um modal acessível;
+- permitir arquivar, em vez de excluir, turmas que já possuem matrículas no histórico;
 - permitir que a secretaria mantenha a estrutura curricular e o histórico por telas próprias.
 
 ## O que faria com mais tempo

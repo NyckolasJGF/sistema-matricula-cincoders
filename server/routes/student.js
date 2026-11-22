@@ -12,9 +12,10 @@ export function registerStudentRoutes(app, { db, auth }) {
     const query = `%${req.query.q ?? ''}%`;
     const size = 5;
     const page = Math.max(Number(req.query.page) || 1, 1);
-    const rows = db.prepare(`SELECT s.id sectionId,d.id subjectId,d.code,d.name,d.hours,p.name professor,s.capacity FROM sections s JOIN subjects d ON d.id=s.subject_id JOIN professors p ON p.id=s.professor_id WHERE d.code LIKE ? OR d.name LIKE ? ORDER BY d.code`).all(query, query);
+    const rows = db.prepare(`SELECT s.id sectionId,d.id subjectId,d.code,d.name,d.description,d.hours,p.name professor,s.capacity FROM sections s JOIN subjects d ON d.id=s.subject_id JOIN professors p ON p.id=s.professor_id WHERE d.code LIKE ? OR d.name LIKE ? ORDER BY d.code`).all(query, query);
     const items = rows.slice((page - 1) * size, page * size).map((row) => ({
       ...row,
+      section: `Turma ${String(row.sectionId).padStart(2, '0')}`,
       occupied: activeCount(db, row.sectionId),
       kind: subjectKind(db, req.user, row.subjectId),
     }));
@@ -32,8 +33,8 @@ export function registerStudentRoutes(app, { db, auth }) {
   });
 
   app.get('/api/enrollments/me', auth('STUDENT'), (req, res) => {
-    const rows = db.prepare(`SELECT e.id,s.subject_id,d.code,d.name,d.hours FROM enrollments e JOIN sections s ON s.id=e.section_id JOIN subjects d ON d.id=s.subject_id WHERE e.student_id=? AND e.status='ACTIVE'`).all(req.user.id);
-    res.json(rows.map((row) => ({ ...row, kind: subjectKind(db, req.user, row.subject_id) })));
+    const rows = db.prepare(`SELECT e.id,s.id sectionId,s.subject_id,d.code,d.name,d.description,d.hours FROM enrollments e JOIN sections s ON s.id=e.section_id JOIN subjects d ON d.id=s.subject_id WHERE e.student_id=? AND e.status='ACTIVE'`).all(req.user.id);
+    res.json(rows.map((row) => ({ ...row, section: `Turma ${String(row.sectionId).padStart(2, '0')}`, kind: subjectKind(db, req.user, row.subject_id) })));
   });
 
   app.delete('/api/enrollments/:id', auth('STUDENT'), (req, res) => {
