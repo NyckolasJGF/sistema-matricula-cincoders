@@ -49,12 +49,25 @@ Todas as rotas começam com `/api`. O login cria uma sessão em cookie HTTP-only
 
 Erros usam JSON no formato `{ "error": "mensagem clara" }`, com `401` para sessão ausente/expirada, `403` para perfil sem permissão, `409` para conflito de regra de negócio e `422` para dados inválidos.
 
+## Requisito funcional adicional: pré-requisitos
+
+Foi escolhido o requisito de pré-requisitos entre disciplinas. A escolha demonstra uma regra acadêmica comum que afeta tanto a modelagem quanto a matrícula: uma turma só pode ser escolhida se cada pré-requisito estiver aprovado no histórico do aluno.
+
+Exemplos presentes nos dados iniciais:
+
+- Estruturas de Dados exige Programação I;
+- Inteligência Artificial exige Estruturas de Dados;
+- Projeto Integrador exige Programação I.
+
+A regra é validada exclusivamente no back-end, dentro da mesma transação que protege as vagas. A resposta informa quais códigos ainda precisam ser cumpridos.
+
 ## Decisões
 
 - **SQLite**: banco relacional local, simples de revisar e apropriado ao escopo do teste.
 - **Express + React**: API e interface desacopladas, com respostas HTTP e erros claros.
 - **Sessão por cookie**: o login cria uma sessão de 30 minutos em cookie `httpOnly`; em produção, o armazenamento da sessão deve ser persistente e a autenticação deve incluir senha com hash.
-- **Regra extra - pré-requisitos**: uma disciplina só pode ser matriculada quando todas as suas predecessoras estiverem aprovadas. Ex.: Estruturas de Dados exige Programação I; IA exige Estruturas de Dados. A validação está no back-end e a mensagem identifica os códigos pendentes.
+- **Transação de matrícula**: `BEGIN IMMEDIATE` evita que duas requisições ocupem simultaneamente a última vaga de uma turma.
+- **Progresso orientado ao curso**: a classificação é calculada a partir da estrutura curricular do aluno, e não da disciplina isolada.
 
 ## Regras cobertas
 
@@ -63,9 +76,24 @@ Erros usam JSON no formato `{ "error": "mensagem clara" }`, com `401` para sess�
 - estudante só altera as próprias matrículas; aprovação impede nova matrícula;
 - classificação por curso, excesso de perfil transferido para livre e progresso limitado a 100%.
 
+## Testes
+
+```bash
+npm test
+```
+
+Os testes automatizados cobrem restrições de dados, sessão, lotação, aprovação anterior, pré-requisitos, reprovação, cancelamento e reativação de matrícula, classificação por curso, excesso de eletivas de perfil e limites de progresso.
+
 ## Evoluções futuras
 
 - usar armazenamento persistente para sessões e senha com hash;
 - adicionar testes HTTP de integração às regras já cobertas pelas unidades;
 - substituir o `prompt` de alteração de vagas por um modal acessível;
 - permitir que a secretaria mantenha a estrutura curricular e o histórico por telas próprias.
+
+## O que faria com mais tempo
+
+- trocar o ajuste de vagas por um modal acessível, sem `prompt` do navegador;
+- incluir testes HTTP de integração, além dos testes de regras de negócio;
+- adicionar recuperação de senha, hash de senha e armazenamento persistente de sessões;
+- permitir à secretaria administrar cursos, currículos, histórico e pré-requisitos pela interface.
