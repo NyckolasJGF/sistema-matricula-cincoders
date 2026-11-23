@@ -27,7 +27,7 @@ npm run build
 ## Organização de código
 
 - `src/pages`: telas por perfil e fluxo;
-- `src/components`: elementos reutilizáveis de interface, como tabela, marca e resumo de disciplina;
+- `src/components`: elementos reutilizáveis de interface, como tabela, marca, resumo de disciplina e seletor de tema;
 - `src/assets`: recursos visuais locais, incluindo a marca e a fotografia do CIn usada no login;
 - `src/services`: comunicação com a API;
 - `server`: inicialização, banco, regras de negócio e testes;
@@ -74,6 +74,8 @@ A regra é validada exclusivamente no back-end, dentro da mesma transação que 
 - **Resumo de disciplina**: a secretaria mantém uma descrição curta; o aluno a consulta por hover, foco de teclado ou toque no ícone de informação.
 - **Motion**: transições de aba, feedbacks de matrícula e popovers usam animações curtas e respeitam `prefers-reduced-motion`.
 - **Identidade do login**: no desktop, a tela combina uma fotografia sombreada do CIn, a marca institucional e um cartão de acesso com contraste; no celular, a fotografia é omitida para preservar legibilidade e desempenho.
+- **Tema persistente**: o seletor claro/escuro é armazenado em `localStorage`, ficando disponível tanto no login quanto nas áreas autenticadas.
+- **Erros contextuais**: conflitos de ações administrativas são exibidos junto ao botão que os originou, com animação e desaparecimento automático após três segundos; falhas gerais continuam no aviso global.
 
 ## Regras cobertas
 

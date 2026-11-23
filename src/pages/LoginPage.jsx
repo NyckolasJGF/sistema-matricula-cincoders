@@ -1,10 +1,11 @@
 import Brand from '../components/Brand';
+import ThemeToggle from '../components/ThemeToggle';
 
-export default function LoginPage({ onLogin, error, setError }) {
+export default function LoginPage({ onLogin, error, setError, theme, onToggleTheme }) {
   return (
     <main className="login-page">
       <section className="login-story">
-        <Brand light detail="Sistema de graduação" />
+        <div className="login-story-header"><Brand light detail="Sistema de graduação" /><ThemeToggle login theme={theme} onToggle={onToggleTheme} /></div>
         <div className="story-copy">
           <p>2026.2 · Graduação</p>
           <h1>Tecnologia a serviço da sua jornada.</h1>
@@ -12,6 +13,7 @@ export default function LoginPage({ onLogin, error, setError }) {
         </div>
       </section>
       <section className="login-form-area">
+        <div className="login-mobile-theme"><ThemeToggle theme={theme} onToggle={onToggleTheme} /></div>
         <div className="login-card">
           <Brand detail="Sistema de graduação" />
           <h1>Boas-vindas.</h1>

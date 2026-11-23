@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import Table from '../components/Table';
 import { request } from '../services/api';
 
@@ -15,6 +16,10 @@ export default function OfficePage({ setError }) {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState(new URLSearchParams(location.search).get('q') ?? '');
   const [page, setPage] = useState(Number(new URLSearchParams(location.search).get('page')) || 1);
+  const [formError, setFormError] = useState('');
+  const [rowErrors, setRowErrors] = useState({});
+  const [pendingAction, setPendingAction] = useState('');
+  const rowErrorTimers = useRef({});
 
   async function load() {
     setLoading(true);
@@ -36,8 +41,13 @@ export default function OfficePage({ setError }) {
     load();
   }, []);
 
+  useEffect(() => () => {
+    Object.values(rowErrorTimers.current).forEach(window.clearTimeout);
+  }, []);
+
   async function submit(event) {
     event.preventDefault();
+    setFormError('');
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
     const subject = {
@@ -47,6 +57,7 @@ export default function OfficePage({ setError }) {
       description: form.get('description'),
     };
 
+    setPendingAction('form');
     try {
       if (view === 'subjects') {
         await request(editing ? `/office/subjects/${editing.id}` : '/office/subjects', {
@@ -74,13 +85,28 @@ export default function OfficePage({ setError }) {
       formElement.reset();
       await load();
     } catch (error) {
-      setError(error.message);
+      setFormError(error.message);
+    } finally {
+      setPendingAction('');
+    }
+  }
+
+  function setRowError(key, message) {
+    window.clearTimeout(rowErrorTimers.current[key]);
+    setRowErrors((errors) => ({ ...errors, [key]: message }));
+    if (message) {
+      rowErrorTimers.current[key] = window.setTimeout(() => {
+        setRowErrors((errors) => ({ ...errors, [key]: '' }));
+      }, 3000);
     }
   }
 
   async function updateCapacity(row) {
     const capacity = Number(window.prompt(`Novo total de vagas para ${row.code}:`, row.capacity));
     if (!Number.isInteger(capacity)) return;
+    const key = `section-${row.id}`;
+    setRowError(key, '');
+    setPendingAction(key);
     try {
       await request(`/office/sections/${row.id}/capacity`, {
         method: 'PUT',
@@ -88,27 +114,39 @@ export default function OfficePage({ setError }) {
       });
       await load();
     } catch (error) {
-      setError(error.message);
+      setRowError(key, error.message);
+    } finally {
+      setPendingAction('');
     }
   }
 
   async function deleteProfessor(row) {
     if (!window.confirm(`Excluir o professor ${row.name}?`)) return;
+    const key = `professor-${row.id}`;
+    setRowError(key, '');
+    setPendingAction(key);
     try {
       await request(`/office/professors/${row.id}`, { method: 'DELETE' });
       await load();
     } catch (error) {
-      setError(error.message);
+      setRowError(key, error.message);
+    } finally {
+      setPendingAction('');
     }
   }
 
   async function deleteSection(row) {
     if (!window.confirm(`Excluir ${row.section} de ${row.code}?`)) return;
+    const key = `section-${row.id}`;
+    setRowError(key, '');
+    setPendingAction(key);
     try {
       await request(`/office/sections/${row.id}`, { method: 'DELETE' });
       await load();
     } catch (error) {
-      setError(error.message);
+      setRowError(key, error.message);
+    } finally {
+      setPendingAction('');
     }
   }
 
@@ -133,12 +171,31 @@ export default function OfficePage({ setError }) {
     setPage(nextPage);
   }
 
+  function professorActions(row) {
+    const key = `professor-${row.id}`;
+    return <div className="table-action-feedback">
+      <button className="danger-action" disabled={pendingAction === key} onClick={() => deleteProfessor(row)}>{pendingAction === key ? 'Excluindo…' : 'Excluir'}</button>
+      <RowError message={rowErrors[key]} />
+    </div>;
+  }
+
+  function sectionActions(row) {
+    const key = `section-${row.id}`;
+    return <div className="table-action-feedback">
+      <div className="table-actions">
+        <button disabled={pendingAction === key} onClick={() => updateCapacity(row)}>Alterar vagas</button>
+        <button className="danger-action" disabled={pendingAction === key} onClick={() => deleteSection(row)}>{pendingAction === key ? 'Excluindo…' : 'Excluir'}</button>
+      </div>
+      <RowError message={rowErrors[key]} />
+    </div>;
+  }
+
   return (
     <section className="content office-content">
       <nav aria-label="Navegação da secretaria">
         {tabs.map(([id, label]) => <button
           className={view === id ? 'active' : ''}
-          onClick={() => { setView(id); setEditing(null); }}
+          onClick={() => { setView(id); setEditing(null); setFormError(''); setRowErrors({}); }}
           key={id}
         >
           {label}
@@ -190,8 +247,9 @@ export default function OfficePage({ setError }) {
               </select>
               <input name="capacity" type="number" min="1" placeholder="Vagas" required />
             </>}
-            <button>{editing ? 'Salvar edição' : view === 'subjects' ? '+ Nova disciplina' : view === 'professors' ? '+ Novo professor' : '+ Abrir turma'}</button>
-            {editing && <button type="button" className="cancel-edit" onClick={() => setEditing(null)}>Cancelar</button>}
+            <button disabled={pendingAction === 'form'}>{pendingAction === 'form' ? 'Salvando…' : editing ? 'Salvar edição' : view === 'subjects' ? '+ Nova disciplina' : view === 'professors' ? '+ Novo professor' : '+ Abrir turma'}</button>
+            {editing && <button type="button" className="cancel-edit" onClick={() => { setEditing(null); setFormError(''); }}>Cancelar</button>}
+            {formError && <p className="form-error" role="alert">{formError}</p>}
           </form>
 
           <Table
@@ -200,8 +258,8 @@ export default function OfficePage({ setError }) {
             action={view === 'subjects'
               ? (row) => <button onClick={() => setEditing(row)}>Editar</button>
               : view === 'professors'
-                ? (row) => <button className="danger-action" onClick={() => deleteProfessor(row)}>Excluir</button>
-                : (row) => <div className="table-actions"><button onClick={() => updateCapacity(row)}>Alterar vagas</button><button className="danger-action" onClick={() => deleteSection(row)}>Excluir</button></div>}
+                ? professorActions
+                : sectionActions}
           />
 
           {view === 'subjects' && <div className="pagination">
@@ -213,4 +271,18 @@ export default function OfficePage({ setError }) {
       </section>
     </section>
   );
+}
+
+function RowError({ message }) {
+  return <AnimatePresence>
+    {message && <motion.p
+      role="alert"
+      initial={{ opacity: 0, x: -8, scale: 0.97 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      exit={{ opacity: 0, x: -5, scale: 0.98 }}
+      transition={{ duration: 0.18, ease: 'easeOut' }}
+    >
+      {message}
+    </motion.p>}
+  </AnimatePresence>;
 }
