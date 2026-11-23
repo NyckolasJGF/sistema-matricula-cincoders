@@ -37,16 +37,16 @@ npm run build
 
 Todas as rotas começam com `/api`. O login cria uma sessão em cookie HTTP-only, válida por 30 minutos.
 
-| Perfil | Método e rota | Finalidade |
-| --- | --- | --- |
-| Público | `POST /login` | Autentica pelo `username`. |
-| Autenticado | `POST /logout`, `GET /me` | Encerra ou consulta a sessão. |
-| Aluno | `GET /offers?q=&page=` | Ofertas, busca e paginação. |
-| Aluno | `POST /enrollments`, `GET /enrollments/me`, `DELETE /enrollments/:id` | Matricular, listar e cancelar. |
-| Aluno | `GET /progress` | Progresso por grupo de carga horária. |
-| Secretaria | `GET/POST /office/subjects`, `PUT /office/subjects/:id` | Listar, criar e editar disciplinas, incluindo resumo opcional de até 280 caracteres. |
-| Secretaria | `GET/POST /office/professors`, `DELETE /office/professors/:id` | Listar, cadastrar e excluir professor sem turmas vinculadas. |
-| Secretaria | `GET/POST /office/sections`, `PUT /office/sections/:id/capacity`, `DELETE /office/sections/:id` | Listar, abrir, alterar vagas e excluir turmas sem matrículas registradas. |
+| Perfil      | Método e rota                                                                                   | Finalidade                                                                           |
+| ----------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Público     | `POST /login`                                                                                   | Autentica pelo `username`.                                                           |
+| Autenticado | `POST /logout`, `GET /me`                                                                       | Encerra ou consulta a sessão.                                                        |
+| Aluno       | `GET /offers?q=&page=`                                                                          | Ofertas, busca e paginação.                                                          |
+| Aluno       | `POST /enrollments`, `GET /enrollments/me`, `DELETE /enrollments/:id`                           | Matricular, listar e cancelar.                                                       |
+| Aluno       | `GET /progress`                                                                                 | Progresso por grupo de carga horária.                                                |
+| Secretaria  | `GET/POST /office/subjects`, `PUT /office/subjects/:id`                                         | Listar, criar e editar disciplinas, incluindo resumo opcional de até 280 caracteres. |
+| Secretaria  | `GET/POST /office/professors`, `DELETE /office/professors/:id`                                  | Listar, cadastrar e excluir professor sem turmas vinculadas.                         |
+| Secretaria  | `GET/POST /office/sections`, `PUT /office/sections/:id/capacity`, `DELETE /office/sections/:id` | Listar, abrir, alterar vagas e excluir turmas sem matrículas registradas.            |
 
 Erros usam JSON no formato `{ "error": "mensagem clara" }`, com `401` para sessão ausente/expirada, `403` para perfil sem permissão, `409` para conflito de regra de negócio e `422` para dados inválidos.
 
@@ -70,6 +70,7 @@ A regra é validada exclusivamente no back-end, dentro da mesma transação que 
 - **Transação de matrícula**: `BEGIN IMMEDIATE` evita que duas requisições ocupem simultaneamente a última vaga de uma turma.
 - **Progresso orientado ao curso**: a classificação é calculada a partir da estrutura curricular do aluno, e não da disciplina isolada.
 - **Turmas por professor**: cada combinação de disciplina e professor é uma turma independente, com identificação e vagas próprias. O sistema impede repetir a mesma combinação.
+- **Matrícula única por disciplina**: mesmo que uma disciplina tenha turmas com professores diferentes, o aluno só pode manter uma matrícula ativa nela por vez.
 - **Remoção conservadora**: professor com turma vinculada e turma com matrícula registrada não podem ser excluídos, preservando a consistência e o histórico.
 - **Resumo de disciplina**: a secretaria mantém uma descrição curta; o aluno a consulta por hover, foco de teclado ou toque no ícone de informação.
 - **Motion**: transições de aba, feedbacks de matrícula e popovers usam animações curtas e respeitam `prefers-reduced-motion`.
@@ -82,6 +83,7 @@ A regra é validada exclusivamente no back-end, dentro da mesma transação que 
 - código e e-mail únicos (schema); CH entre 15 e 120 e múltipla de 15;
 - vagas positivas, impedimento de lotação e devolução da vaga no cancelamento;
 - estudante só altera as próprias matrículas; aprovação impede nova matrícula;
+- estudante não mantém duas matrículas ativas em turmas da mesma disciplina;
 - classificação por curso, excesso de perfil transferido para livre e progresso limitado a 100%.
 - uma disciplina pode ter turmas separadas para professores diferentes, com vagas independentes;
 - resumo de disciplina limitado a 280 caracteres e remoções administrativas protegidas por vínculos.
@@ -92,7 +94,7 @@ A regra é validada exclusivamente no back-end, dentro da mesma transação que 
 npm test
 ```
 
-Os testes automatizados cobrem restrições de dados, sessão, lotação, aprovação anterior, pré-requisitos, reprovação, cancelamento e reativação de matrícula, classificação por curso, excesso de eletivas de perfil e limites de progresso.
+Os testes automatizados cobrem restrições de dados, sessão, lotação, alteração de vagas abaixo das matrículas ativas, escopo das próprias matrículas, aprovação anterior, pré-requisitos, reprovação, cancelamento e reativação de matrícula, classificação por curso, excesso de eletivas de perfil e limites de progresso.
 
 ## Evoluções futuras
 

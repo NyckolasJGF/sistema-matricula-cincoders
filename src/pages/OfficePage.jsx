@@ -41,9 +41,12 @@ export default function OfficePage({ setError }) {
     load();
   }, []);
 
-  useEffect(() => () => {
-    Object.values(rowErrorTimers.current).forEach(window.clearTimeout);
-  }, []);
+  useEffect(
+    () => () => {
+      Object.values(rowErrorTimers.current).forEach(window.clearTimeout);
+    },
+    [],
+  );
 
   async function submit(event) {
     event.preventDefault();
@@ -150,20 +153,29 @@ export default function OfficePage({ setError }) {
     }
   }
 
-  const matchingSubjects = catalog.subjects.filter((item) => (
-    `${item.code} ${item.name} ${item.description ?? ''}`.toLowerCase().includes(query.toLowerCase())
-  ));
+  const matchingSubjects = catalog.subjects.filter((item) =>
+    `${item.code} ${item.name} ${item.description ?? ''}`
+      .toLowerCase()
+      .includes(query.toLowerCase()),
+  );
   const pageSize = 5;
   const totalPages = Math.max(1, Math.ceil(matchingSubjects.length / pageSize));
-  const rows = view === 'subjects'
-    ? matchingSubjects.slice((page - 1) * pageSize, page * pageSize)
-    : catalog[view];
-  const columns = view === 'subjects'
-    ? ['code', 'name', 'hours']
-    : view === 'professors'
-      ? ['name', 'email']
-      : ['section', 'code', 'name', 'professor', 'occupied', 'capacity'];
-  const heading = view === 'subjects' ? 'Disciplinas' : view === 'professors' ? 'Professores' : 'Turmas do semestre';
+  const rows =
+    view === 'subjects'
+      ? matchingSubjects.slice((page - 1) * pageSize, page * pageSize)
+      : catalog[view];
+  const columns =
+    view === 'subjects'
+      ? ['code', 'name', 'hours']
+      : view === 'professors'
+        ? ['name', 'email']
+        : ['section', 'code', 'name', 'professor', 'occupied', 'capacity'];
+  const heading =
+    view === 'subjects'
+      ? 'Disciplinas'
+      : view === 'professors'
+        ? 'Professores'
+        : 'Turmas do semestre';
 
   function searchSubjects(nextPage = 1) {
     const parameters = new URLSearchParams({ q: query, page: String(nextPage) });
@@ -173,33 +185,58 @@ export default function OfficePage({ setError }) {
 
   function professorActions(row) {
     const key = `professor-${row.id}`;
-    return <div className="table-action-feedback">
-      <button className="danger-action" disabled={pendingAction === key} onClick={() => deleteProfessor(row)}>{pendingAction === key ? 'Excluindo…' : 'Excluir'}</button>
-      <RowError message={rowErrors[key]} />
-    </div>;
+    return (
+      <div className="table-action-feedback">
+        <button
+          className="danger-action"
+          disabled={pendingAction === key}
+          onClick={() => deleteProfessor(row)}
+        >
+          {pendingAction === key ? 'Excluindo…' : 'Excluir'}
+        </button>
+        <RowError message={rowErrors[key]} />
+      </div>
+    );
   }
 
   function sectionActions(row) {
     const key = `section-${row.id}`;
-    return <div className="table-action-feedback">
-      <div className="table-actions">
-        <button disabled={pendingAction === key} onClick={() => updateCapacity(row)}>Alterar vagas</button>
-        <button className="danger-action" disabled={pendingAction === key} onClick={() => deleteSection(row)}>{pendingAction === key ? 'Excluindo…' : 'Excluir'}</button>
+    return (
+      <div className="table-action-feedback">
+        <div className="table-actions">
+          <button disabled={pendingAction === key} onClick={() => updateCapacity(row)}>
+            Alterar vagas
+          </button>
+          <button
+            className="danger-action"
+            disabled={pendingAction === key}
+            onClick={() => deleteSection(row)}
+          >
+            {pendingAction === key ? 'Excluindo…' : 'Excluir'}
+          </button>
+        </div>
+        <RowError message={rowErrors[key]} />
       </div>
-      <RowError message={rowErrors[key]} />
-    </div>;
+    );
   }
 
   return (
     <section className="content office-content">
       <nav aria-label="Navegação da secretaria">
-        {tabs.map(([id, label]) => <button
-          className={view === id ? 'active' : ''}
-          onClick={() => { setView(id); setEditing(null); setFormError(''); setRowErrors({}); }}
-          key={id}
-        >
-          {label}
-        </button>)}
+        {tabs.map(([id, label]) => (
+          <button
+            className={view === id ? 'active' : ''}
+            onClick={() => {
+              setView(id);
+              setEditing(null);
+              setFormError('');
+              setRowErrors({});
+            }}
+            key={id}
+          >
+            {label}
+          </button>
+        ))}
       </nav>
 
       <div className="page-intro">
@@ -209,80 +246,187 @@ export default function OfficePage({ setError }) {
       </div>
 
       <div className="office-stats" aria-label="Resumo do semestre">
-        <article><span>Disciplinas ativas</span><strong>{catalog.subjects.length}</strong><small>cadastradas no sistema</small></article>
-        <article><span>Turmas abertas</span><strong>{catalog.sections.length}</strong><small>disponíveis neste semestre</small></article>
-        <article><span>Matrículas ativas</span><strong>{catalog.sections.reduce((total, row) => total + row.occupied, 0)}</strong><small>vagas já ocupadas</small></article>
+        <article>
+          <span>Disciplinas ativas</span>
+          <strong>{catalog.subjects.length}</strong>
+          <small>cadastradas no sistema</small>
+        </article>
+        <article>
+          <span>Turmas abertas</span>
+          <strong>{catalog.sections.length}</strong>
+          <small>disponíveis neste semestre</small>
+        </article>
+        <article>
+          <span>Matrículas ativas</span>
+          <strong>{catalog.sections.reduce((total, row) => total + row.occupied, 0)}</strong>
+          <small>vagas já ocupadas</small>
+        </article>
       </div>
 
       <section className="office-table">
         <div className="office-table-header">
-          <div><h2>{heading}</h2><p>Cadastre e mantenha os dados atualizados.</p></div>
+          <div>
+            <h2>{heading}</h2>
+            <p>Cadastre e mantenha os dados atualizados.</p>
+          </div>
         </div>
 
-        {loading ? <p className="loading-state">Carregando dados da secretaria…</p> : <>
-          {view === 'subjects' && <div className="search">
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar disciplina" />
-            <button onClick={() => searchSubjects(1)}>Buscar</button>
-          </div>}
+        {loading ? (
+          <p className="loading-state">Carregando dados da secretaria…</p>
+        ) : (
+          <>
+            {view === 'subjects' && (
+              <div className="search">
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Buscar disciplina"
+                />
+                <button onClick={() => searchSubjects(1)}>Buscar</button>
+              </div>
+            )}
 
-          <form className="admin-form" onSubmit={submit} key={`${view}-${editing?.id ?? 'new'}`}>
-            {view === 'subjects' && <>
-              <input name="code" defaultValue={editing?.code} placeholder="Código (ex.: IF1006)" required />
-              <input name="name" defaultValue={editing?.name} placeholder="Nome da disciplina" required />
-              <input name="hours" defaultValue={editing?.hours} type="number" min="15" max="120" step="15" placeholder="CH" required />
-              <textarea name="description" defaultValue={editing?.description} maxLength="280" placeholder="Resumo da disciplina (opcional, até 280 caracteres)" />
-            </>}
-            {view === 'professors' && <>
-              <input name="name" placeholder="Nome do professor" required />
-              <input name="email" type="email" placeholder="E-mail institucional" required />
-            </>}
-            {view === 'sections' && <>
-              <select name="subjectId" required defaultValue="">
-                <option value="" disabled>Disciplina</option>
-                {catalog.subjects.map((item) => <option value={item.id} key={item.id}>{item.code} — {item.name}</option>)}
-              </select>
-              <select name="professorId" required defaultValue="">
-                <option value="" disabled>Professor</option>
-                {catalog.professors.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
-              </select>
-              <input name="capacity" type="number" min="1" placeholder="Vagas" required />
-            </>}
-            <button disabled={pendingAction === 'form'}>{pendingAction === 'form' ? 'Salvando…' : editing ? 'Salvar edição' : view === 'subjects' ? '+ Nova disciplina' : view === 'professors' ? '+ Novo professor' : '+ Abrir turma'}</button>
-            {editing && <button type="button" className="cancel-edit" onClick={() => { setEditing(null); setFormError(''); }}>Cancelar</button>}
-            {formError && <p className="form-error" role="alert">{formError}</p>}
-          </form>
+            <form className="admin-form" onSubmit={submit} key={`${view}-${editing?.id ?? 'new'}`}>
+              {view === 'subjects' && (
+                <>
+                  <input
+                    name="code"
+                    defaultValue={editing?.code}
+                    placeholder="Código (ex.: IF1006)"
+                    required
+                  />
+                  <input
+                    name="name"
+                    defaultValue={editing?.name}
+                    placeholder="Nome da disciplina"
+                    required
+                  />
+                  <input
+                    name="hours"
+                    defaultValue={editing?.hours}
+                    type="number"
+                    min="15"
+                    max="120"
+                    step="15"
+                    placeholder="CH"
+                    required
+                  />
+                  <textarea
+                    name="description"
+                    defaultValue={editing?.description}
+                    maxLength="280"
+                    placeholder="Resumo da disciplina (opcional, até 280 caracteres)"
+                  />
+                </>
+              )}
+              {view === 'professors' && (
+                <>
+                  <input name="name" placeholder="Nome do professor" required />
+                  <input name="email" type="email" placeholder="E-mail institucional" required />
+                </>
+              )}
+              {view === 'sections' && (
+                <>
+                  <select name="subjectId" required defaultValue="">
+                    <option value="" disabled>
+                      Disciplina
+                    </option>
+                    {catalog.subjects.map((item) => (
+                      <option value={item.id} key={item.id}>
+                        {item.code} — {item.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select name="professorId" required defaultValue="">
+                    <option value="" disabled>
+                      Professor
+                    </option>
+                    {catalog.professors.map((item) => (
+                      <option value={item.id} key={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
+                  <input name="capacity" type="number" min="1" placeholder="Vagas" required />
+                </>
+              )}
+              <button disabled={pendingAction === 'form'}>
+                {pendingAction === 'form'
+                  ? 'Salvando…'
+                  : editing
+                    ? 'Salvar edição'
+                    : view === 'subjects'
+                      ? '+ Nova disciplina'
+                      : view === 'professors'
+                        ? '+ Novo professor'
+                        : '+ Abrir turma'}
+              </button>
+              {editing && (
+                <button
+                  type="button"
+                  className="cancel-edit"
+                  onClick={() => {
+                    setEditing(null);
+                    setFormError('');
+                  }}
+                >
+                  Cancelar
+                </button>
+              )}
+              {formError && (
+                <p className="form-error" role="alert">
+                  {formError}
+                </p>
+              )}
+            </form>
 
-          <Table
-            rows={rows}
-            columns={columns}
-            action={view === 'subjects'
-              ? (row) => <button onClick={() => setEditing(row)}>Editar</button>
-              : view === 'professors'
-                ? professorActions
-                : sectionActions}
-          />
+            <Table
+              rows={rows}
+              columns={columns}
+              columnLabels={view === 'professors' ? { name: 'Professor' } : undefined}
+              action={
+                view === 'subjects'
+                  ? (row) => <button onClick={() => setEditing(row)}>Editar</button>
+                  : view === 'professors'
+                    ? professorActions
+                    : sectionActions
+              }
+            />
 
-          {view === 'subjects' && <div className="pagination">
-            <button disabled={page === 1} onClick={() => searchSubjects(page - 1)}>Anterior</button>
-            <span>Página {page} de {totalPages}</span>
-            <button disabled={page >= totalPages} onClick={() => searchSubjects(page + 1)}>Próxima</button>
-          </div>}
-        </>}
+            {view === 'subjects' && (
+              <div className="pagination">
+                <button disabled={page === 1} onClick={() => searchSubjects(page - 1)}>
+                  Anterior
+                </button>
+                <span>
+                  Página {page} de {totalPages}
+                </span>
+                <button disabled={page >= totalPages} onClick={() => searchSubjects(page + 1)}>
+                  Próxima
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </section>
     </section>
   );
 }
 
 function RowError({ message }) {
-  return <AnimatePresence>
-    {message && <motion.p
-      role="alert"
-      initial={{ opacity: 0, x: -8, scale: 0.97 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: -5, scale: 0.98 }}
-      transition={{ duration: 0.18, ease: 'easeOut' }}
-    >
-      {message}
-    </motion.p>}
-  </AnimatePresence>;
+  return (
+    <AnimatePresence>
+      {message && (
+        <motion.p
+          role="alert"
+          initial={{ opacity: 0, x: -8, scale: 0.97 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          exit={{ opacity: 0, x: -5, scale: 0.98 }}
+          transition={{ duration: 0.18, ease: 'easeOut' }}
+        >
+          {message}
+        </motion.p>
+      )}
+    </AnimatePresence>
+  );
 }
